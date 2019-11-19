@@ -488,7 +488,15 @@ void LocalDerivationGoal::startBuilder()
 
     /* Create a temporary directory where the build will take
        place. */
-    tmpDir = createTempDir(settings.buildDir.get().value_or(""), "nix-build-" + std::string(drvPath.name()), false, false, 0700);
+    // FIXME
+    auto drvName_trunc = std::string(drvPath.name());
+    drvName_trunc.resize(std::min(drvName_trunc.length()
+                ,(size_t)(92
+                    -15 /* size of '/tmp/nix-build-' */
+                    -12 /*.nix-socket*/
+                    )
+                ));
+    tmpDir = createTempDir(settings.buildDir.get().value_or(""), "nix-build-" + drvName_trunc, false, false, 0700);
 
     chownToBuilder(tmpDir);
 
