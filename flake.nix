@@ -209,7 +209,7 @@
 
       binaryTarball = buildPackages: nix: pkgs:
         let
-          inherit (pkgs) cacert;
+          inherit (pkgs) cacert nixStore;
           installerClosureInfo = buildPackages.closureInfo { rootPaths = [ nix cacert ]; };
         in
 
@@ -221,6 +221,7 @@
             cp ${installerClosureInfo}/registration $TMPDIR/reginfo
             cp ${./scripts/create-darwin-volume.sh} $TMPDIR/create-darwin-volume.sh
             substitute ${./scripts/install-nix-from-closure.sh} $TMPDIR/install \
+              --subst-var-by nixStore ${nixStore} \
               --subst-var-by nix ${nix} \
               --subst-var-by cacert ${cacert}
 
@@ -282,6 +283,14 @@
       overlayFor = getStdenv: final: prev:
         let currentStdenv = getStdenv final; in
         {
+          nixStore = builtins.trace "nixStore=/nix" "/nix";
+
+          nixBinaryTarball = binaryTarball prev.pkgs final.nix final.pkgs;
+
+          nixBinaryTarballCrossAarch64 = binaryTarball prev.pkgsCross.aarch64-multiplatform
+          final.pkgsCross.aarch64-multiplatform.nix
+          final.pkgsCross.aarch64-multiplatform;
+
           nixStable = prev.nix;
 
           # Forward from the previous stage as we don’t want it to pick the lowdown override
@@ -324,8 +333,14 @@
                 ''}
               '';
 
-            configureFlags = configureFlags ++
-              [ "--sysconfdir=/etc" ];
+            configureFlags = configureFlags
+              ++ (lib.optionals (nixStore == "/nix") [ "--sysconfdir=/etc" ])
+              ++ (lib.optionals (nixStore != "/nix") [
+                "--with-store-dir=${final.nixStore}/store"
+                "--localstatedir=${final.nixStore}/var"
+                "--sysconfdir=${final.nixStore}/etc" ])
+                ;
+
 
             enableParallelBuilding = true;
 
@@ -411,7 +426,9 @@
       # 'nix.perl-bindings' packages.
       overlay = overlayFor (p: p.stdenv);
 
-      hydraJobs = {
+      hydraJobs = jobs nixpkgsFor.x86_64-linux;
+
+      jobs = defaultPkgs: {
 
         # Binary package for various platforms.
         build = nixpkgs.lib.genAttrs systems (system: self.packages.${system}.nix);
@@ -451,7 +468,7 @@
 
         # Line coverage analysis.
         coverage =
-          with nixpkgsFor.x86_64-linux;
+          with defaultPkgs;
           with commonDeps pkgs;
 
           releaseTools.coverageAnalysis {
@@ -560,6 +577,9 @@
       packages = forAllSystems (system: {
         inherit (nixpkgsFor.${system}) nix;
       } // (nixpkgs.lib.optionalAttrs (builtins.elem system linux64BitSystems) {
+
+        nixBinaryTarball = nixpkgsFor.${system}.nixBinaryTarball;
+
         nix-static = let
           nixpkgs = nixpkgsFor.${system}.pkgsStatic;
         in with commonDeps nixpkgs; nixpkgs.stdenv.mkDerivation {
