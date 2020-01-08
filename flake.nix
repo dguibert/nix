@@ -214,7 +214,7 @@
       binaryTarball = nix: pkgs:
         let
           inherit (pkgs) buildPackages;
-          inherit (pkgs) cacert;
+          inherit (pkgs) cacert nixStore;
           installerClosureInfo = buildPackages.closureInfo { rootPaths = [ nix cacert ]; };
         in
 
@@ -226,6 +226,7 @@
             cp ${installerClosureInfo}/registration $TMPDIR/reginfo
             cp ${./scripts/create-darwin-volume.sh} $TMPDIR/create-darwin-volume.sh
             substitute ${./scripts/install-nix-from-closure.sh} $TMPDIR/install \
+              --subst-var-by nixStore ${nixStore} \
               --subst-var-by nix ${nix} \
               --subst-var-by cacert ${cacert}
 
@@ -288,6 +289,14 @@
       overlayFor = getStdenv: final: prev:
         let currentStdenv = getStdenv final; in
         {
+          nixStore = builtins.trace "nixStore=/nix" "/nix";
+
+          nixBinaryTarball = self.hydraJobs.binaryTarball.${currentStdenv.system};
+
+          nixBinaryTarballCrossAarch64 = binaryTarball
+            final.pkgsCross.aarch64-multiplatform.nix
+            final.pkgsCross.aarch64-multiplatform;
+
           nixStable = prev.nix;
 
           # Forward from the previous stage as we don’t want it to pick the lowdown override
@@ -335,10 +344,15 @@
                 ''}
               '';
 
-            configureFlags = configureFlags ++
-              [ "--sysconfdir=/etc" ] ++
-              lib.optional stdenv.hostPlatform.isStatic "--enable-embedded-sandbox-shell" ++
-              lib.optional (!canRunInstalled) "--disable-doc-gen";
+            configureFlags = configureFlags
+              ++ (lib.optionals (nixStore == "/nix") [ "--sysconfdir=/etc" ])
+              ++ (lib.optionals (nixStore != "/nix") [
+                "--with-store-dir=${final.nixStore}/store"
+                "--localstatedir=${final.nixStore}/var"
+                "--sysconfdir=${final.nixStore}/etc" ])
+              ++ lib.optional stdenv.hostPlatform.isStatic "--enable-embedded-sandbox-shell"
+              ++ lib.optional (!canRunInstalled) "--disable-doc-gen";
+
 
             enableParallelBuilding = true;
 
@@ -440,7 +454,9 @@
       # 'nix.perl-bindings' packages.
       overlays.default = overlayFor (p: p.stdenv);
 
-      hydraJobs = {
+      hydraJobs = jobs nixpkgsFor.x86_64-linux.native;
+
+      jobs = defaultPkgs: {
 
         # Binary package for various platforms.
         build = forAllSystems (system: self.packages.${system}.nix);
@@ -478,7 +494,7 @@
 
         # Line coverage analysis.
         coverage =
-          with nixpkgsFor.x86_64-linux.native;
+          with defaultPkgs;
           with commonDeps { inherit pkgs; };
 
           releaseTools.coverageAnalysis {
@@ -586,6 +602,9 @@
         default = nix;
       } // (lib.optionalAttrs (builtins.elem system linux64BitSystems) {
         nix-static = nixpkgsFor.${system}.static.nix;
+
+        nixBinaryTarball = nixpkgsFor.${system}.native.nixBinaryTarball;
+
         dockerImage =
           let
             pkgs = nixpkgsFor.${system}.native;
