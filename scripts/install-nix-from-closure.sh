@@ -2,7 +2,7 @@
 
 set -e
 
-dest="/nix"
+dest="@nixStore@"
 self="$(dirname "$0")"
 nix="@nix@"
 cacert="@cacert@"
