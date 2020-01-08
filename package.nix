@@ -35,6 +35,7 @@
 , sqlite
 , util-linux
 , xz
+, nixStore
 
 , busybox-sandbox-shell ? null
 
@@ -275,7 +276,6 @@ in {
   );
 
   configureFlags = [
-    "--sysconfdir=/etc"
     (lib.enableFeature doBuild "build")
     (lib.enableFeature anySortOfTesting "tests")
     (lib.enableFeature enableInternalAPIDocs "internal-api-docs")
@@ -291,7 +291,12 @@ in {
   ] ++ lib.optional (doBuild && stdenv.isLinux && !(stdenv.hostPlatform.isStatic && stdenv.system == "aarch64-linux"))
        "LDFLAGS=-fuse-ld=gold"
     ++ lib.optional (doBuild && stdenv.hostPlatform.isStatic) "--enable-embedded-sandbox-shell"
-    ++ lib.optional buildUnitTests "RAPIDCHECK_HEADERS=${lib.getDev rapidcheck}/extras/gtest/include";
+    ++ lib.optional buildUnitTests "RAPIDCHECK_HEADERS=${lib.getDev rapidcheck}/extras/gtest/include"
+    ++ (lib.optionals (nixStore == "/nix") [ "--sysconfdir=/etc" ])
+    ++ (lib.optionals (nixStore != "/nix") [
+       "--with-store-dir=${nixStore}/store"
+       "--localstatedir=${nixStore}/var"
+       "--sysconfdir=${nixStore}/etc" ]);
 
   enableParallelBuilding = true;
 

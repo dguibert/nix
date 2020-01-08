@@ -137,6 +137,14 @@
           stdenv = getStdenv final;
         in
         {
+          nixStore = builtins.trace "nixStore=/nix" "/nix";
+
+          nixBinaryTarball = self.hydraJobs.binaryTarball.${currentStdenv.system};
+
+          nixBinaryTarballCrossAarch64 = binaryTarball
+            final.pkgsCross.aarch64-multiplatform.nix
+            final.pkgsCross.aarch64-multiplatform;
+
           nixStable = prev.nix;
 
           default-busybox-sandbox-shell = final.busybox.override {
@@ -214,12 +222,14 @@
 
           };
 
-    in {
+    in rec {
       # A Nixpkgs overlay that overrides the 'nix' and
       # 'nix.perl-bindings' packages.
       overlays.default = overlayFor (p: p.stdenv);
 
-      hydraJobs = {
+      hydraJobs = jobs nixpkgsFor.x86_64-linux.native;
+
+      jobs = defaultPkgs: {
 
         # Binary package for various platforms.
         build = forAllSystems (system: self.packages.${system}.nix);
@@ -367,6 +377,9 @@
         default = nix;
       } // (lib.optionalAttrs (builtins.elem system linux64BitSystems) {
         nix-static = nixpkgsFor.${system}.static.nix;
+
+        nixBinaryTarball = nixpkgsFor.${system}.native.nixBinaryTarball;
+
         dockerImage =
           let
             pkgs = nixpkgsFor.${system}.native;
