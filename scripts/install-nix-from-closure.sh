@@ -4,7 +4,7 @@ set -e
 
 umask 0022
 
-dest="/nix"
+dest="@nixStore@"
 self="$(dirname "$0")"
 nix="@nix@"
 cacert="@cacert@"
