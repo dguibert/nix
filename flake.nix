@@ -174,11 +174,14 @@
 
       };
 
-    in {
+    in rec {
 
       # A Nixpkgs overlay that overrides the 'nix' and
       # 'nix.perl-bindings' packages.
-      overlay = final: prev: {
+      overlay = final: prev: with final; {
+        nixStore = builtins.trace "nixStore=/nix" "/nix";
+
+        nixBinaryTarball = (jobs final.pkgs).binaryTarball.${stdenv.hostPlatform.system};
 
         # An older version of Nix to test against when using the daemon.
         # Currently using `nixUnstable` as the stable one doesn't respect
@@ -213,8 +216,13 @@
               ''}
             '';
 
-          configureFlags = configureFlags ++
-            [ "--sysconfdir=/etc" ];
+          configureFlags = configureFlags
+            ++ (lib.optionals (nixStore == "/nix") [ "--sysconfdir=/etc" ])
+            ++ (lib.optionals (nixStore != "/nix") [
+              "--with-store-dir=${final.nixStore}/store"
+              "--localstatedir=${final.nixStore}/var"
+              "--sysconfdir=${final.nixStore}/etc" ])
+            ;
 
           enableParallelBuilding = true;
 
@@ -296,7 +304,9 @@
 
       };
 
-      hydraJobs = {
+      hydraJobs = jobs nixpkgsFor.x86_64-linux;
+
+      jobs = defaultPkgs: {
 
         # Binary package for various platforms.
         build = nixpkgs.lib.genAttrs systems (system: self.packages.${system}.nix);
@@ -325,6 +335,7 @@
               cp ${installerClosureInfo}/registration $TMPDIR/reginfo
               cp ${./scripts/create-darwin-volume.sh} $TMPDIR/create-darwin-volume.sh
               substitute ${./scripts/install-nix-from-closure.sh} $TMPDIR/install \
+                --subst-var-by nixStore ${nixStore} \
                 --subst-var-by nix ${nix} \
                 --subst-var-by cacert ${cacert}
 
@@ -392,7 +403,7 @@
 
         # Line coverage analysis.
         coverage =
-          with nixpkgsFor.x86_64-linux;
+          with defaultPkgs;
           with commonDeps pkgs;
 
           releaseTools.coverageAnalysis {
@@ -486,6 +497,9 @@
 
       packages = forAllSystems (system: {
         inherit (nixpkgsFor.${system}) nix;
+
+        nixBinaryTarball = nixpkgsFor.${system}.nixBinaryTarball;
+
       } // nixpkgs.lib.optionalAttrs (builtins.elem system linux64BitSystems) {
         nix-static = let
           nixpkgs = nixpkgsFor.${system}.pkgsStatic;
@@ -525,6 +539,7 @@
 
           strictDeps = true;
         };
+
       });
 
       defaultPackage = forAllSystems (system: self.packages.${system}.nix);
