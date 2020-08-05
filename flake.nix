@@ -282,7 +282,7 @@
         # the installation script.
         binaryTarball = nixpkgs.lib.genAttrs systems (system:
 
-          with nixpkgsFor.${system};
+          with defaultPkgs;
 
           let
             installerClosureInfo = closureInfo { rootPaths = [ nix cacert ]; };
