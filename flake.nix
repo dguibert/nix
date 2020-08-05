@@ -440,7 +440,8 @@
         # Binary tarball for various platforms, containing a Nix store
         # with the closure of 'nix' package, and the second half of
         # the installation script.
-        binaryTarball = nixpkgs.lib.genAttrs systems (system: binaryTarball nixpkgsFor.${system} nixpkgsFor.${system}.nix nixpkgsFor.${system});
+
+        binaryTarball = nixpkgs.lib.genAttrs systems (system: binaryTarball defaultPkgs nixpkgsFor.${system}.nix nixpkgsFor.${system});
 
         binaryTarballCross = nixpkgs.lib.genAttrs ["x86_64-linux"] (system: builtins.listToAttrs (map (crossSystem: {
           name = crossSystem;
