@@ -2524,11 +2524,16 @@ void DerivationGoal::startBuilder()
                 if (line == "") {
                     state = stBegin;
                 } else {
+                    bool optional = false;
+                    if (line[line.size() - 1] == '?') {
+                        optional = true;
+                        line.pop_back();
+                    }
                     auto p = line.find('=');
                     if (p == string::npos)
-                        dirsInChroot[line] = line;
+                        dirsInChroot[line] = {line, optional};
                     else
-                        dirsInChroot[string(line, 0, p)] = string(line, p + 1);
+                        dirsInChroot[string(line, 0, p)] = {string(line, p + 1), optional};
                 }
             }
         }
