@@ -14,6 +14,8 @@
 #include "topo-sort.hh"
 #include "callback.hh"
 
+#include "thread-pool.hh"
+
 #include <regex>
 #include <queue>
 
@@ -2197,6 +2199,8 @@ void DerivationGoal::startDaemon()
     chownToBuilder(socketPath);
 
     daemonThread = std::thread([this, store]() {
+        /* The daemon worker threads pool. */
+        ThreadPool daemonWorkerPool(INT_MAX);
 
         while (true) {
 
@@ -2216,7 +2220,7 @@ void DerivationGoal::startDaemon()
 
             debug("received daemon connection");
 
-            auto workerThread = std::thread([store, remote{std::move(remote)}]() {
+            auto workerThread = [store, remote{std::move(remote)}]() {
                 FdSource from(remote.get());
                 FdSink to(remote.get());
                 try {
@@ -2227,12 +2231,18 @@ void DerivationGoal::startDaemon()
                 } catch (SysError &) {
                     ignoreException();
                 }
-            });
+            };
+            std::function<void()> workerThreadAsFunction = [
+                p = std::make_shared<decltype(workerThread)>(std::move(workerThread))
+            ]() { (*p)(); };
 
-            daemonWorkerThreads.push_back(std::move(workerThread));
+            daemonWorkerPool.enqueue(workerThreadAsFunction);
+
         }
 
         debug("daemon shutting down");
+        // draining workerThread pool
+        daemonWorkerPool.process();
     });
 }
 
@@ -2244,12 +2254,6 @@ void DerivationGoal::stopDaemon()
 
     if (daemonThread.joinable())
         daemonThread.join();
-
-    // FIXME: should prune worker threads more quickly.
-    // FIXME: shutdown the client socket to speed up worker termination.
-    for (auto & thread : daemonWorkerThreads)
-        thread.join();
-    daemonWorkerThreads.clear();
 
     daemonSocket = -1;
 }

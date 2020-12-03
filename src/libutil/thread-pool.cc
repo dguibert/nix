@@ -47,7 +47,7 @@ void ThreadPool::enqueue(const work_t & t)
         throw ThreadPoolShutDown("cannot enqueue a work item while the thread pool is shutting down");
     state->pending.push(t);
     /* Note: process() also executes items, so count it as a worker. */
-    if (state->pending.size() > state->workers.size() + 1 && state->workers.size() + 1 < maxThreads)
+    if (state->pending.size() > state->workers.size() && state->workers.size() + 1 < maxThreads)
         state->workers.emplace_back(&ThreadPool::doWork, this, false);
     work.notify_one();
 }

@@ -228,9 +228,6 @@ struct DerivationGoal : public Goal
     /* The daemon main thread. */
     std::thread daemonThread;
 
-    /* The daemon worker threads. */
-    std::vector<std::thread> daemonWorkerThreads;
-
     /* Paths that were added via recursive Nix calls. */
     StorePathSet addedPaths;
 
