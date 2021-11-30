@@ -282,7 +282,11 @@
       {
         nixStore = builtins.trace "nixStore=/nix" "/nix";
 
-        nixBinaryTarball = (jobs final.pkgs).binaryTarball.${currentStdenv.hostPlatform.system};
+        nixBinaryTarball = binaryTarball prev.pkgs final.nix final.pkgs;
+
+        nixBinaryTarballCrossAarch64 = binaryTarball prev.pkgsCross.aarch64-multiplatform
+                                                     final.pkgsCross.aarch64-multiplatform.nix
+                                                     final.pkgsCross.aarch64-multiplatform;
 
         nixStable = prev.nix;
 
@@ -397,7 +401,7 @@
         };
       };
 
-    in {
+    in rec {
 
       # A Nixpkgs overlay that overrides the 'nix' and
       # 'nix.perl-bindings' packages.
@@ -567,8 +571,9 @@
       packages = forAllSystems (system: {
         inherit (nixpkgsFor.${system}) nix;
       } // (nixpkgs.lib.optionalAttrs (builtins.elem system linux64BitSystems) {
-
         nixBinaryTarball = nixpkgsFor.${system}.nixBinaryTarball;
+
+        nixBinaryTarballCrossAarch64 = nixpkgsFor.${system}.nixBinaryTarballCrossAarch64;
 
         nix-static = let
           nixpkgs = nixpkgsFor.${system}.pkgsStatic;
