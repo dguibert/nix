@@ -416,7 +416,7 @@
           };
         };
 
-    in {
+    in rec {
 
       # A Nixpkgs overlay that overrides the 'nix' and
       # 'nix.perl-bindings' packages.
@@ -574,8 +574,9 @@
       packages = forAllSystems (system: {
         inherit (nixpkgsFor.${system}) nix;
       } // (nixpkgs.lib.optionalAttrs (builtins.elem system linux64BitSystems) {
-
         nixBinaryTarball = nixpkgsFor.${system}.nixBinaryTarball;
+
+        nixBinaryTarballCrossAarch64 = nixpkgsFor.${system}.nixBinaryTarballCrossAarch64;
 
         nix-static = let
           nixpkgs = nixpkgsFor.${system}.pkgsStatic;
