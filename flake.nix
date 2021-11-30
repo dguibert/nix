@@ -263,7 +263,11 @@
       overlay = final: prev: with final; {
         nixStore = builtins.trace "nixStore=/nix" "/nix";
 
-        nixBinaryTarball = (jobs final.pkgs).binaryTarball.${stdenv.hostPlatform.system};
+        nixBinaryTarball = binaryTarball prev.pkgs nix final.pkgs;
+
+        nixBinaryTarballCrossAarch64 = binaryTarball prev.pkgsCross.aarch64-multiplatform
+                                                     final.pkgsCross.aarch64-multiplatform.nix
+                                                     final.pkgsCross.aarch64-multiplatform;
 
         nixStable = prev.nix;
 
@@ -543,8 +547,9 @@
       packages = forAllSystems (system: {
         inherit (nixpkgsFor.${system}) nix;
       } // (nixpkgs.lib.optionalAttrs (builtins.elem system linux64BitSystems) {
-
         nixBinaryTarball = nixpkgsFor.${system}.nixBinaryTarball;
+
+        nixBinaryTarballCrossAarch64 = nixpkgsFor.${system}.nixBinaryTarballCrossAarch64;
 
         nix-static = let
           nixpkgs = nixpkgsFor.${system}.pkgsStatic;
