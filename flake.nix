@@ -293,7 +293,7 @@
         # Forward from the previous stage as we don’t want it to pick the lowdown override
         nixUnstable = prev.nixUnstable;
 
-        nix = with final; with commonDeps pkgs; currentStdenv.mkDerivation {
+        nix = with final; with commonDeps pkgs; lib.makeOverridable currentStdenv.mkDerivation {
           name = "nix-${version}";
           inherit version;
 
