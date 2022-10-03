@@ -138,7 +138,7 @@
               enableLargeConfig = true;
             }).overrideAttrs(o: {
               patches = (o.patches or []) ++ [
-                ./boehmgc-coroutine-sp-fallback.diff
+                ./boehmgc-8.2.2.coroutine-sp-fallback.diff
               ];
             })
             )
