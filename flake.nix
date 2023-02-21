@@ -542,7 +542,9 @@
           };
         };
 
-    in {
+    in rec {
+      inherit nixpkgsFor;
+
       # A Nixpkgs overlay that overrides the 'nix' and
       # 'nix.perl-bindings' packages.
       overlays.default = overlayFor (p: p.stdenv);
