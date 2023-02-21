@@ -1,7 +1,7 @@
 {
   description = "The purely functional package manager";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11-small";
+  inputs.nixpkgs.url = "github:dguibert/nixpkgs/pu";
   inputs.nixpkgs-regression.url = "github:NixOS/nixpkgs/215d4d0fd80ca5163643b03a33fde804a29cc1e2";
   inputs.lowdown-src = { url = "github:kristapsdz/lowdown"; flake = false; };
 
@@ -468,7 +468,7 @@
         _module.args.nixpkgs = nixpkgs;
       };
 
-    in {
+    in rec {
       inherit nixpkgsFor;
 
       # A Nixpkgs overlay that overrides the 'nix' and
