@@ -440,7 +440,8 @@
           });
 
           lowdown-nix = with final; currentStdenv.mkDerivation rec {
-            name = "lowdown-0.9.0";
+            pname = "lowdown";
+            version = "${lib.substring 0 8 (lowdown-src.lastModifiedDate or lowdown-src.lastModified or "19700101")}.${lowdown-src.shortRev or "dirty"}";
 
             src = lowdown-src;
 
@@ -454,6 +455,12 @@
                   PREFIX=${placeholder "dev"} \
                   BINDIR=${placeholder "bin"}/bin
             '';
+            # since 5ea51429a293428cb9ff58460cfcecaba80eefd7
+            postBuild = ''
+              make install_shared
+              make install_static
+            '';
+
           };
         };
 
