@@ -369,7 +369,7 @@
               ++ lib.optional stdenv.hostPlatform.isStatic "--enable-embedded-sandbox-shell"
               ++ [ (lib.enableFeature finalAttrs.doCheck "tests") ]
               ++ lib.optionals finalAttrs.doCheck testConfigureFlags
-              lib.optional (!canRunInstalled) "--disable-doc-gen";
+              ++ lib.optional (!canRunInstalled) "--disable-doc-gen";
 
             enableParallelBuilding = true;
 
