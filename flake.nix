@@ -395,7 +395,7 @@
         {
           nixStore = builtins.trace "nixStore=/nix" "/nix";
 
-          nixBinaryTarball = self.hydraJobs.binaryTarball.${currentStdenv.system};
+          nixBinaryTarball = binaryTarball final.nix final;
 
           nixBinaryTarballCrossAarch64 = binaryTarball
             final.pkgsCross.aarch64-multiplatform.nix
