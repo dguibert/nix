@@ -153,12 +153,19 @@
           boehmgc-nix = (final.boehmgc.override {
             enableLargeConfig = true;
           }).overrideAttrs(o: {
-            patches = (o.patches or []) ++ [
-              ./dep-patches/boehmgc-coroutine-sp-fallback.diff
+            patches = (o.patches or [])
+                      ++ lib.optionals (lib.strings.versionOlder o.version "8.2.4") [
+                        ./dep-patches/boehmgc-coroutine-sp-fallback.diff
 
-              # https://github.com/ivmai/bdwgc/pull/586
-              ./dep-patches/boehmgc-traceable_allocator-public.diff
-            ];
+                        # https://github.com/ivmai/bdwgc/pull/586
+                        ./dep-patches/boehmgc-traceable_allocator-public.diff
+                      ]
+                      ++ lib.optionals (lib.strings.versionAtLeast o.version "8.2.4") [
+                        ./dep-patches/boehmgc-8.2.4-coroutine-sp-fallback.patch
+
+                        # https://github.com/ivmai/bdwgc/pull/586
+                        ./dep-patches/boehmgc-8.2.4-traceable_allocator-public.patch
+                      ];
           });
 
           changelog-d-nix = final.buildPackages.callPackage ./misc/changelog-d.nix { };
