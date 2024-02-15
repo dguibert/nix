@@ -1,0 +1,24 @@
+From cd8c11edfbbfef117c3405a5044d0ad1e43b6a15 Mon Sep 17 00:00:00 2001
+From: David Guibert <david.guibert@gmail.com>
+Date: Thu, 15 Feb 2024 20:48:04 +0100
+Subject: [PATCH 2/2] boehmgc-traceable_allocator-public
+
+---
+ include/gc_allocator.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/gc_allocator.h b/include/gc_allocator.h
+index 597c7f1..587286b 100644
+--- a/include/gc_allocator.h
++++ b/include/gc_allocator.h
+@@ -312,6 +312,7 @@ public:
+ 
+ template<>
+ class traceable_allocator<void> {
++public:
+   typedef size_t      size_type;
+   typedef ptrdiff_t   difference_type;
+   typedef void*       pointer;
+-- 
+2.43.0
+
