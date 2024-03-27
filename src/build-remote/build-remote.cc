@@ -195,28 +195,40 @@ static int main_build_remote(int argc, char * * argv)
                         for (unsigned int i = 0; i < machines.size(); ++i)
                             errorText += "\n([%s], %s, [%s], [%s])";
 
-                        // add the template values.
-                        std::string drvstr;
-                        if (drvPath.has_value())
-                            drvstr = drvPath->to_string();
-                        else
-                            drvstr = "<unknown>";
+                        // std::cout << errorText << std::endl;
+                        // // add the template values.
+                        // std::string drvstr;
+                        // if (drvPath.has_value())
+                        //     drvstr = drvPath->to_string();
+                        // else
+                        //     drvstr = "<unknown>";
 
-                        auto error = HintFmt(errorText);
-                        error
-                            % drvstr
-                            % neededSystem
-                            % concatStringsSep<StringSet>(", ", requiredFeatures)
-                            % machines.size();
+                        // auto error = HintFmt(errorText);
+                        // std::cout << drvstr << std::endl;
+                        // error
+                        //     % drvstr;
+                        // std::cout << neededSystem << std::endl;
+                        // error
+                        //     % neededSystem;
+                        // std::cout << concatStringsSep<StringSet>(", ", requiredFeatures) << std::endl;
+                        // error
+                        //     % concatStringsSep<StringSet>(", ", requiredFeatures)
+                        //     % machines.size();
 
-                        for (auto & m : machines)
-                            error
-                                % concatStringsSep<StringSet>(", ", m.systemTypes)
-                                % m.maxJobs
-                                % concatStringsSep<StringSet>(", ", m.supportedFeatures)
-                                % concatStringsSep<StringSet>(", ", m.mandatoryFeatures);
+                        // for (auto & m : machines) {
+                        // //    error
+                        // //        % concatStringsSep<StringSet>(", ", m.systemTypes)
+                        //     std::cout << concatStringsSep<StringSet>(", ", m.systemTypes) << std::endl;
+                        //     std::cout << m.maxJobs << std::endl;
+                        //     std::cout << concatStringsSep<StringSet>(", ", m.supportedFeatures) << std::endl;
+                        //     std::cout << concatStringsSep<StringSet>(", ", m.mandatoryFeatures) << std::endl;
+                        // //        % m.maxJobs
+                        // //        % concatStringsSep<StringSet>(", ", m.supportedFeatures)
+                        // //        % concatStringsSep<StringSet>(", ", m.mandatoryFeatures);
+                        // };
 
-                        printMsg(couldBuildLocally ? lvlChatty : lvlWarn, error.str());
+                        // //std::cout << error.str();
+                        // //printMsg(couldBuildLocally ? lvlChatty : lvlWarn, error.str());
 
                         std::cerr << "# decline\n";
                     }
