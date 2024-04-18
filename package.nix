@@ -299,9 +299,13 @@ in {
     (lib.enableFeature enableMarkdown "markdown")
     (lib.enableFeature installUnitTests "install-unit-tests")
     (lib.withFeatureAs true "readline-flavor" readlineFlavor)
-  ] ++ lib.optionals (!forDevShell) [
-    "--sysconfdir=/etc"
-  ] ++ lib.optionals installUnitTests [
+  ] ++ lib.optionals (!forDevShell) 
+       (lib.optionals (builtins.storeDir == "/nix/store") [ "--sysconfdir=/etc" ])
+  ++ (lib.optionals (builtins.storeDir != "/nix/store") [
+    "--with-store-dir=${builtins.storeDir}"
+    "--localstatedir=${builtins.dirOf builtins.storeDir}/var"
+    "--sysconfdir=${builtins.dirOf builtins.storeDir}/etc" ])
+    ++ lib.optionals installUnitTests [
     "--with-check-bin-dir=${builtins.placeholder "check"}/bin"
     "--with-check-lib-dir=${builtins.placeholder "check"}/lib"
   ] ++ lib.optionals (doBuild) [
