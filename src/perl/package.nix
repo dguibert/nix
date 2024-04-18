@@ -50,7 +50,7 @@ perl.pkgs.toPerlModule (
     ];
 
     # `perlPackages.Test2Harness` is marked broken for Darwin
-    doCheck = !stdenv.isDarwin;
+    doCheck = !(stdenv.isDarwin || (builtins.storeDir != "/nix/store"));
 
     nativeCheckInputs = [
       perlPackages.Test2Harness

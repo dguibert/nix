@@ -77,6 +77,13 @@ mkMesonLibrary (finalAttrs: {
     (lib.mesonBool "embedded-sandbox-shell" embeddedSandboxShell)
     (lib.mesonEnable "s3-aws-auth" withAWS)
   ]
+  ++ lib.optionals (builtins.storeDir != "/nix/store") [
+    (lib.mesonOption "store-dir" "${builtins.storeDir}")
+    #(lib.mesonOption "datadir" "${builtins.dirOf builtins.storeDir}")
+    (lib.mesonOption "localstatedir" "${builtins.dirOf builtins.storeDir}/var")
+    (lib.mesonOption "sysconfdir" "${builtins.dirOf builtins.storeDir}/etc")
+    (lib.mesonOption "log-dir" "${builtins.dirOf builtins.storeDir}/var/log")
+  ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     (lib.mesonOption "sandbox-shell" "${busybox-sandbox-shell}/bin/busybox")
   ];

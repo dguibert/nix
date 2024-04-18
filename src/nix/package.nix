@@ -71,8 +71,12 @@ mkMesonExecutable (finalAttrs: {
     nix-cmd
   ];
 
-  mesonFlags = [
-  ];
+  mesonFlags =
+    [
+    ]
+    ++ lib.optionals (builtins.storeDir != "/nix/store") [
+      (lib.mesonOption "localstatedir" "${builtins.dirOf builtins.storeDir}/var")
+    ];
 
   postInstall = lib.optionalString stdenv.hostPlatform.isStatic ''
     mkdir -p $out/nix-support
