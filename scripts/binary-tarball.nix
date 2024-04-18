@@ -26,6 +26,7 @@ runCommand "nix-binary-tarball-${version}" env ''
   substitute ${./install-nix-from-closure.sh} $TMPDIR/install \
     --subst-var-by nix ${nix} \
     --subst-var-by cacert ${cacert}
+  sed -i -e 's|^dest=".*|dest="${builtins.dirOf builtins.storeDir}"|' $TMPDIR/install
 
   substitute ${./install-darwin-multi-user.sh} $TMPDIR/install-darwin-multi-user.sh \
     --subst-var-by nix ${nix} \
