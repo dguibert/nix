@@ -79,9 +79,13 @@ mkMesonExecutable (finalAttrs: {
   ]
   ++ lib.optional withMimalloc mimalloc;
 
-  mesonFlags = [
-    (lib.mesonEnable "mimalloc" withMimalloc)
-  ];
+  mesonFlags =
+    [
+      (lib.mesonEnable "mimalloc" withMimalloc)
+    ]
+    ++ lib.optionals (builtins.storeDir != "/nix/store") [
+      (lib.mesonOption "localstatedir" "${builtins.dirOf builtins.storeDir}/var")
+    ];
 
   postInstall = lib.optionalString stdenv.hostPlatform.isStatic ''
     mkdir -p $out/nix-support
