@@ -180,9 +180,6 @@
                       ]
                       ++ lib.optionals (lib.strings.versionAtLeast o.version "8.2.4") [
                         ./dep-patches/boehmgc-8.2.4-coroutine-sp-fallback.patch
-
-                        # https://github.com/ivmai/bdwgc/pull/586
-                        ./dep-patches/boehmgc-8.2.4-traceable_allocator-public.patch
                       ];
           });
 
