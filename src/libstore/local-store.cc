@@ -1419,22 +1419,26 @@ bool LocalStore::verifyStore(bool checkContents, RepairFlag repair)
 
         printInfo("checking link hashes...");
 
-        for (auto & link : std::filesystem::directory_iterator{linksDir}) {
+        for (auto & dir : std::filesystem::directory_iterator{linksDir}) {
             checkInterrupt();
-            auto name = link.path().filename();
-            printMsg(lvlTalkative, "checking contents of '%s'", name);
-            PosixSourceAccessor accessor;
-            std::string hash = hashPath(
-                PosixSourceAccessor::createAtRoot(link.path()),
-                FileIngestionMethod::NixArchive, HashAlgorithm::SHA256).first.to_string(HashFormat::Nix32, false);
-            if (hash != name.string()) {
-                printError("link '%s' was modified! expected hash '%s', got '%s'",
-                    link.path(), name, hash);
-                if (repair) {
-                    std::filesystem::remove(link.path());
-                    printInfo("removed link '%s'", link.path());
-                } else {
-                    errors = true;
+            for (auto & link : std::filesystem::directory_iterator{dir.path()}) {
+                checkInterrupt();
+                auto name = dir.path().filename();
+                name += link.path().filename();
+                printMsg(lvlTalkative, "checking contents of '%s'", name);
+                PosixSourceAccessor accessor;
+                std::string hash = hashPath(
+                    PosixSourceAccessor::createAtRoot(link.path()),
+                    FileIngestionMethod::NixArchive, HashAlgorithm::SHA256).first.to_string(HashFormat::Nix32, false);
+                if (hash != name.string()) {
+                    printError("link '%s' was modified! expected hash '%s', got '%s'",
+                        link.path(), name, hash);
+                    if (repair) {
+                        std::filesystem::remove(link.path());
+                        printInfo("removed link '%s'", link.path());
+                    } else {
+                        errors = true;
+                    }
                 }
             }
         }

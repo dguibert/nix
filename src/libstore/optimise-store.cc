@@ -46,16 +46,20 @@ LocalStore::InodeHash LocalStore::loadInodeHash()
     debug("loading hash inodes in memory");
     InodeHash inodeHash;
 
-    AutoCloseDir dir(opendir(linksDir.c_str()));
-    if (!dir) throw SysError("opening directory '%1%'", linksDir);
-
-    struct dirent * dirent;
-    while (errno = 0, dirent = readdir(dir.get())) { /* sic */
+    for (auto & subdir : std::filesystem::directory_iterator{linksDir}) {
         checkInterrupt();
-        // We don't care if we hit non-hash files, anything goes
-        inodeHash.insert(dirent->d_ino);
+        auto subdirName = subdir.path().filename();
+        struct dirent * dirent;
+        AutoCloseDir dir(opendir(subdirName.c_str()));
+        if (!dir) throw SysError("opening directory '%1%'", subdirName);
+
+        while (errno = 0, dirent = readdir(dir.get())) { /* sic */
+            checkInterrupt();
+            // We don't care if we hit non-hash files, anything goes
+            inodeHash.insert(dirent->d_ino);
+        }
+        if (errno) throw SysError("reading directory '%1%'", subdirName);
     }
-    if (errno) throw SysError("reading directory '%1%'", linksDir);
 
     printMsg(lvlTalkative, "loaded %1% hash inodes", inodeHash.size());
 
@@ -156,8 +160,11 @@ void LocalStore::optimisePath_(Activity * act, OptimiseStats & stats,
     debug("'%1%' has hash '%2%'", path, hash.to_string(HashFormat::Nix32, true));
 
     /* Check if this is a known hash. */
-    std::filesystem::path linkPath = std::filesystem::path{linksDir} / hash.to_string(HashFormat::Nix32, false);
+    auto hash_str = hash.to_string(HashFormat::Nix32, false);
+    std::filesystem::path linkDir = std::filesystem::path{linksDir} / hash_str.substr(0, 1);
+    std::filesystem::path linkPath = std::filesystem::path{linksDir} / hash_str.substr(0, 1) / hash_str.substr(2);
 
+    createDirs(linkDir);
     /* Maybe delete the link, if it has been corrupted. */
     if (std::filesystem::exists(std::filesystem::symlink_status(linkPath))) {
         auto stLink = lstat(linkPath.string());
