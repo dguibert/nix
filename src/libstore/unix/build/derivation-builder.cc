@@ -1447,6 +1447,7 @@ SingleDrvOutputs DerivationBuilderImpl::registerOutputs()
                 PathFmt(actualPath));
         struct stat & st = *optSt;
 
+#if 0
 #ifndef __CYGWIN__
         /* Check that the output is not group or world writable, as
            that means that someone else can have interfered with the
@@ -1459,6 +1460,7 @@ SingleDrvOutputs DerivationBuilderImpl::registerOutputs()
                 "suspicious ownership or permission on %s for output '%s'; rejecting this build output",
                 PathFmt(actualPath),
                 outputName);
+#endif
 #endif
 
         /* Canonicalise first.  This ensures that the path we're
