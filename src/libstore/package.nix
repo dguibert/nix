@@ -38,6 +38,8 @@
   withAWS ?
     # Default is this way because there have been issues building this dependency
     (lib.meta.availableOn stdenv.hostPlatform aws-c-common),
+
+  storeDir ? builtins.storeDir,
 }:
 
 let
@@ -93,12 +95,12 @@ mkMesonLibrary (finalAttrs: {
     (lib.mesonBool "embedded-sandbox-shell" embeddedSandboxShell)
     (lib.mesonEnable "s3-aws-auth" withAWS)
   ]
-  ++ lib.optionals (builtins.storeDir != "/nix/store") [
-    (lib.mesonOption "store-dir" "${builtins.storeDir}")
+  ++ lib.optionals (builtins.trace "libstore storeDir=${storeDir}" storeDir != "/nix/store") [
+    (lib.mesonOption "store-dir" "${storeDir}")
     #(lib.mesonOption "datadir" "${builtins.dirOf builtins.storeDir}")
-    (lib.mesonOption "localstatedir" "${builtins.dirOf builtins.storeDir}/var")
-    (lib.mesonOption "sysconfdir" "${builtins.dirOf builtins.storeDir}/etc")
-    (lib.mesonOption "log-dir" "${builtins.dirOf builtins.storeDir}/var/log")
+    (lib.mesonOption "localstatedir" "${builtins.dirOf storeDir}/var")
+    (lib.mesonOption "sysconfdir" "${builtins.dirOf storeDir}/etc")
+    (lib.mesonOption "log-dir" "${builtins.dirOf storeDir}/var/log")
   ]
   ++ lib.optionals withSandboxShell [
     (lib.mesonOption "sandbox-shell" sandboxShell)

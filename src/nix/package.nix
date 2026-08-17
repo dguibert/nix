@@ -31,6 +31,8 @@
   # Whether to embed the public C API into the `nix` executable so plugins can
   # resolve those symbols without linking Nix libraries directly.
   withPluginCApi ? !stdenv.hostPlatform.isWindows && !stdenv.hostPlatform.isStatic,
+
+  storeDir ? builtins.storeDir,
 }:
 
 let
@@ -105,8 +107,8 @@ mkMesonExecutable (finalAttrs: {
       (lib.mesonEnable "mimalloc" withMimalloc)
       (lib.mesonBool "plugin-c-api" withPluginCApi)
     ]
-    ++ lib.optionals (builtins.storeDir != "/nix/store") [
-      (lib.mesonOption "localstatedir" "${builtins.dirOf builtins.storeDir}/var")
+    ++ lib.optionals (builtins.trace "nix storeDir=${storeDir}" storeDir != "/nix/store") [
+      (lib.mesonOption "localstatedir" "${builtins.dirOf storeDir}/var")
     ];
 
   postInstall = lib.optionalString stdenv.hostPlatform.isStatic ''
